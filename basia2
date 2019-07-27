@@ -1,0 +1,244 @@
+表的基础 认识
+
+     ADT：抽象数据类型，一些操作的集合。模块化设计的扩充。
+
+表 ADT
+
+1.一般形式：A1,A2,A3....,An,大小为n.n=0时，称为空表。An前后分别为An的前驱和后继。
+
+常用操作：PrintList,MakeEmpty,Find,Insert,Delete
+
+2.链表(List)：每一个结构均含有表元素和指向包含该元素后继元的结构的指针。线性时间，效率更高。
+
+删除指令：使指针指向下下个元素。
+
+插入指令：需要使用一次malloc调用从新单元并在此后执行两次指针调整。
+
+（在C中表和Position以及函数的原型都列在所谓的.h头文件中。具体（Node）节点声明则在.c文件中。）
+
+    /*变量声明*/
+    struct Node
+    {
+        ElementType Element;
+        Position    Next;
+    }
+    
+    struct Node;
+    typedef struct Node *PtrToNode;//定义指针
+    typedef PtrToNode List;
+    typedef PtrToNode Position;
+    
+    
+    
+    /*返回链表中元素X的位置*/
+    Position Find(ElementType X, List L)
+    {
+        Position P;
+        P = L->Next;
+        while(P != NULL && P->Element != X)
+        {
+            P = P->Next;
+        }
+        return P;
+    }
+    
+    
+    
+    /*删除链表中的元素X*/
+    /*Assume use of a header node*/
+    void Delete(ElementType X,List L)
+    {
+        Position P,TmpCell;//TmpCell是定义的一个中间变量
+        if(IsLast(P,L))//判断是否是链表
+        {
+            Tmpcell = P->Next;
+            P->Next = TmpCell->Next;
+            free(TmpCell);
+        }
+    }
+    
+    
+    /*链表插入函数*/
+    void Insert(ElementType X,List L,Position P)
+    {
+        Position TmpCell;
+        TepCell = malloc(sizeof(struct Node));//即前面所说的，插入函数，会先使用动态内存的函数malloc
+        if(TmpCell == NULL)
+        {
+            FatalError("out of space!!!");如果内存不够报错
+        }
+        /*通过中间变量进行交换达到插入的作用*/
+        TmpCell -> Element = X;
+        TmpCell -> Next = P ->Next;
+        P -> Next = TmpCell;
+    }
+    
+
+3.常见错误
+
+原因：有指针变量包含了伪地址
+
+问题：（1）忘记初始化指针，初始化变量失败；指针指向非法。
+
+    /*以删除链表函数为例(假设头指针已定义)*/
+    void DeleteList(List L)
+    {
+        Position P;
+        {
+            P = L->Next;//错误警示：P未定义，是非法的
+        }
+        L -> Next = NULL;
+        while(P != NULL)
+        {
+             free(P);//此处指针已被释放，无定义了，不可以在未定义的情况下再次引用
+             P = P->Next;//P被再次引用，是错误的；P仍然是一个指针且指向地址未变，只是无内容
+        }
+    }
+
+
+
+           （2）何时使用或不使用malloc来获取一个一个新单元。
+
+声明指向一个结构的指针并不创建该结构，而只是给出足够的空间容纳结构可能会使用的地址。这时创建尚未被声明的记录的惟一方法就是使用malloc函数，它能够使系统创建一个新的结构并返回起始地址。
+
+如果使用一个指针变量沿着一个表进行，那就没有必要创建新的结构，即此时不宜使用malloc命令。
+
+如果从未对一个链表进行删除操作，那么调用麻辣咯出的次数应该等于表的大小，若有表头则加一。
+
+在链表中进行一次删除之后，再将该单元释放通常是一个很好的习惯。对于要被放弃的单元，应该需要一个临时的变量，在撤出指针之后，不能再引用它。
+
+删除链表的正确示范：
+
+    void DeleteList(List L)
+    {
+        Position P,Tmp;
+        P = L->Next;
+        L->Next = NULL;
+        while(P != NULL)
+        {
+            Tmp = P->Next;
+            free(P);
+            P = Tmp;
+        }
+    }
+
+
+
+malloc(sizeof(PtrToNode))是合法的，但它不能给结构体分配足够的空间。它只给指针分配一个空间。
+
+循环链表：让最后的单元反过来直指第一个单元。表头可有可无。
+
+4.多项式 ADT
+
+可以用表用表来定义一种关于一元多项式的抽象数据类型。用数组存系数，然后实现加法、乘法等。
+
+多项式ADT的数组实现的类型声明：
+
+    typedef struct
+    {
+        int CoeffArray[MaxDegree + 1];//定义一个数组来存储一元多项式的系数
+        int HighPower;
+    }*Polynomial
+
+初始化为零：
+
+    void ZeroPolynomial(Polynomial Poly)
+    {
+        int i;
+        for(i = 0;i <= MaxDegree;i++)
+        {
+            Poly -> coeffArray[i] = 0；
+        }
+        Poly->HighPower = 0;//前面与平常无异，这一步必须要注意。
+    }
+
+两个多项式相加
+
+    void Add(const Polynamial Poly1, const Polynamial Poly2, const Polynamial PolySum)
+    {
+        int i;
+        ZeroPolynomial(Polynomial PolySum);//初始化合并的多项式的值
+        PolySum -> HighPower = Max(Poly1 -> HighPower,Poly2 -> HighPower)；//找到最大项并赋值给HighPower记录下来
+        for(i = Po;ySum->HighPower;i>=0;i--)
+        {
+            PolySum->CoeffArray[i] = Poly1->CoeffArray[i] + Poly2->CoeffArray[i];//系数相加
+        }
+    }
+
+两个多项式相乘
+
+    void Mul(const Polynamial Poly1, const Polynamial Poly2, const Polynamial PolyProd)
+    {
+        int i,j;
+        ZeroPolynomial(Polynomial PolyProd);//初始化合并的多项式的值
+        PolyPord -> HighPower = Poly1 -> HighPower + Poly2 -> HighPower;//确定相乘次数
+        if(PolyPord -> HighPower > MaxDegree)//判断是否超出之前定义的多项式的空间大小
+        {
+            Error("Exceeded array size");
+        }
+        else
+        {
+            for(i=0;i<=Poly1 -> HighPower;i++)//按照多项式乘法，每两项之间均需要相乘，因此做两次循环
+            {
+                for(j = 0;j <=Poly2 -> HighPower；j++ )
+                {
+                    PolyProd->CoeffArray[i+j] += Poly1->CoeffArray[i] + Poly2->CoeffArray[i];//i+j是多项式相乘后的次数，一次为[i+j]项
+                }
+            }
+        }
+    }
+
+多项式ADT链表实现类型声明
+
+    typedef struct Node *PtrToNode;
+    struct Node
+    {
+        int Coefficient;
+        int Exponent;
+        PtrToNode Next;
+    };
+    typedef PtrToNode Polynomial;//Nodes sorted by exponent
+
+
+
+5.链表的游标实现
+
+在某些语言中不支持指针的使用。因此采用游标实现法。其中指针的两个特性：
+
+（1）数据存储在一组结构体中。每一个结构体包含有数据以及指向下一个结构体的指针。
+
+（2）一个新的结构体可以通过调用malloc从而系统全局内存得到，并可通过调用free而被释放。
+
+这是游标法所要模拟的两个特性。
+
+特性1可以通过建立一个全局的结构体数组。
+
+特性二的实现：保留一个表（freelist）,这个表不在任何表中的单元构成。该表将用于单元0作为表头。
+
+例1：malloc函数的游标法实现
+
+    static Position CursorAlloc()
+    {
+        Position P;
+        P = CursorSpace[0].Next;//初始化指针，CursorSpace[]结构体数组
+        CursorSpace[0].Next = CursorSpace[P].Next;
+        return P;
+    }
+
+例2：delete函数的游标法实现
+
+    /*Delete first occurence of X from a list*/
+    /* Assum use of a header node*/
+    void Delete(ElementType X, List L)
+    {
+        Position P,TmpCell;
+        P = FindPrevious(X,L);
+        if(!IsLast(P,L))//假设头指针已定义。此处判断X元素是否已经找到
+        {
+            TmpCell = Cursorspace[P].Next;//删除方法与之前有指针的链表删除方法相同
+            CursorSpace[P].Next  = CursorSpace[Tmpcell].Next;
+            CursortFree(Tmpcell);
+        }
+    }
+
+
